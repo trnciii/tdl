@@ -52,7 +52,7 @@ def get_key(accountID, playerID):
 
 
 def main(args = sys.argv[1:]):
-	episodeID = args[0].rstrip('a')
+	episodeID = args[0].rstrip('/').split('/')[-1].rstrip('a')
 
 	episodeRes = get_episode(episodeID)
 	if episodeRes == None:
