@@ -1,0 +1,1 @@
+from .tver_dl import main
