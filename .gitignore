@@ -3,3 +3,4 @@
 *.txt
 *.egg-info
 __pycache__
+*.vtt

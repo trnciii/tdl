@@ -88,7 +88,12 @@ def main(args = sys.argv[1:]):
 	print(f'{url=}')
 
 
-	dl = youtube_dl.YoutubeDL({'outtmpl': f'{title}.mp4'})
+	dl = youtube_dl.YoutubeDL({
+		'outtmpl': f'{title}.mp4',
+		'writesubtitles': True,
+		'writeautomaticsub': True,
+		'convertsubtitles': 'srt',
+	})
 	filename = re.sub(r'\..*', '', dl.prepare_filename({}))
 
 	print(f'{filename=}')
