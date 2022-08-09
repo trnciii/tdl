@@ -100,7 +100,12 @@ def main(args = sys.argv[1:]):
 
 	with open(f'{filename}.txt', 'w', encoding='utf-8') as f:
 		f.write(f'{title}\n')
-		f.write(desc)
+		f.write(f'{desc}\n')
+		f.write('\n')
+		f.write(f'url=https://tver.jp/episodes/{episodeID}\n')
+		f.write(f'{episodeID=}\n')
+		f.write(f'{accountID=}\n')
+		f.write(f'{videoID=}\n')
 
 	dl.download([url])
 
