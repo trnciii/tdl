@@ -14,7 +14,7 @@ def get_episode(episodeID):
 	if response.ok:
 		return response.json()
 	else:
-		print('failed in get_episode')
+		print('failed to get episode info')
 		print(response.reason)
 		return None
 
@@ -30,7 +30,7 @@ def get_video_id(accountID, videoRef, key):
 	if response.ok:
 		return response.json()
 	else:
-		print('failed in get_video_id')
+		print('failed to get video id')
 		print(response.reason)
 		return None
 
@@ -46,7 +46,7 @@ def get_key(accountID, playerID):
 			response.text
 		).groups(0)[0]
 	else:
-		print('failed in get_key')
+		print('failed to get policy key')
 		print(response.reason)
 		exit()
 
@@ -79,7 +79,6 @@ def main(args = sys.argv[1:]):
 	title = videoRes['name']
 	desc = videoRes['description']
 
-	print(f'{accountID=}')
 	print(f'{title=}')
 	print(f'{videoID=}')
 
