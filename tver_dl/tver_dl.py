@@ -3,7 +3,7 @@ import sys
 import re
 
 
-def request_episode(episodeID):
+def request_episode(episodeID, dump=False):
 	response = requests.get(
 		f'https://statics.tver.jp/content/episode/{episodeID}.json',
 		params={
@@ -12,6 +12,9 @@ def request_episode(episodeID):
 	)
 
 	if response.ok:
+		if dump:
+			with open(f'episode_{episodeID}.json', 'w', encoding='utf-8') as f:
+				f.write(response.text)
 		return response.json()
 	else:
 		print('failed to get episode info')
@@ -19,7 +22,7 @@ def request_episode(episodeID):
 		return None
 
 
-def request_video(accountID, videoRef, key):
+def request_video(accountID, videoRef, key, dump=False):
 	response = requests.get(
 		f'https://edge.api.brightcove.com/playback/v1/accounts/{accountID}/videos/ref:{videoRef}',
 		headers={
@@ -28,6 +31,9 @@ def request_video(accountID, videoRef, key):
 	)
 
 	if response.ok:
+		if dump:
+			with open(f'video_{accountID}_{videoRef}.json', 'w', encoding='utf-8') as f:
+				f.write(response.text)
 		return response.json()
 	else:
 		print('failed to get video id')
@@ -35,24 +41,28 @@ def request_video(accountID, videoRef, key):
 		return None
 
 
-def get_key(accountID, playerID):
+def get_key(accountID, playerID, dump=False):
 	response = requests.get(
 		f'https://players.brightcove.net/{accountID}/{playerID}_default/index.min.js',
 		headers={}
 	)
 	if response.ok:
+		if dump:
+			with open(f'key_{accountID}.js', 'w', encoding='utf-8') as f:
+				f.write(response.text)
 		return re.search(
 			r'(?<=policyKey:")(.*?)(?=")',
 			response.text
 		).groups(0)[0]
+
 	else:
 		print('failed to get policy key')
 		print(response.reason)
 		exit()
 
 
-def get_program(episodeID):
-	episodeRes = request_episode(episodeID)
+def get_program(episodeID, dump=False):
+	episodeRes = request_episode(episodeID, dump=dump)
 	if episodeRes == None:
 		exit()
 
@@ -65,11 +75,11 @@ def get_program(episodeID):
 	print(f'{playerID=}')
 
 
-	key = get_key(accountID, playerID)
+	key = get_key(accountID, playerID, dump=dump)
 	print(f'{key=}')
 
 
-	videoRes = request_video(accountID, videoRef, key)
+	videoRes = request_video(accountID, videoRef, key, dump=dump)
 	if videoRes == None:
 		exit()
 
@@ -88,7 +98,7 @@ def get_program(episodeID):
 def main(args = sys.argv[1:]):
 	episodeID = args[0].rstrip('/').split('/')[-1].rstrip('a')
 
-	program = get_program(episodeID)
+	program = get_program(episodeID, 'dump' in args)
 
 	dl = youtube_dl.YoutubeDL({
 		'outtmpl': f'{program["title"]}.mp4',
