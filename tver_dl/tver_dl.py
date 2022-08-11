@@ -22,6 +22,24 @@ def request_episode(episodeID, dump=False):
 		return None
 
 
+def request_series(seriesID, dump=False):
+	response = requests.get(
+		f'https://statics.tver.jp/content/series/{seriesID}.json',
+		params={
+			'v': '3',
+		})
+
+	if response.ok:
+		if dump:
+			with open(f'series_{seriesID}.json', 'w', encoding='utf-8') as f:
+				f.write(response.text)
+		return response.json()
+	else:
+		print('failed to get series')
+		print(response.reason)
+		return None
+
+
 def request_video(accountID, videoRef, key, dump=False):
 	response = requests.get(
 		f'https://edge.api.brightcove.com/playback/v1/accounts/{accountID}/videos/ref:{videoRef}',
@@ -84,15 +102,33 @@ def get_program(episodeID, dump=False):
 		exit()
 
 	videoID = videoRes['id']
-	title = videoRes['name']
-	desc = videoRes['description']
+	print(f'{videoID=}')
+
+
+	seriesID = episodeRes['seriesID']
+	seriesRes = request_series(seriesID, dump=dump)
+	if seriesRes == None:
+		exit()
+
 
 	return {
-		'title': title,
-		'desc': desc,
+		'series': seriesRes['title'],
+		'desc_series': seriesRes['description'],
+
+		'subtitle': episodeRes['title'],
+		'no': episodeRes['no'],
+		'date': episodeRes['broadcastDateLabel'],
+		'service': episodeRes['broadcastProviderLabel'],
+		'caption': episodeRes['isSubtitle'],
+
+		'name': videoRes['name'],
+		'desc_episode': videoRes['description'],
+
+		'series url': f'https://tver.jp/lp/series/{seriesID}',
 		'episode url': f'https://tver.jp/episodes/{episodeID}',
 		'video url': f'http://players.brightcove.net/{accountID}/default_default/index.html?videoId={videoID}'
 	}
+
 
 
 def main(args = sys.argv[1:]):
@@ -101,7 +137,7 @@ def main(args = sys.argv[1:]):
 	program = get_program(episodeID, 'dump' in args)
 
 	dl = youtube_dl.YoutubeDL({
-		'outtmpl': f'{program["title"]}.mp4',
+		'outtmpl': f'{program["name"]}.mp4',
 		'writesubtitles': True,
 		'writeautomaticsub': True,
 		'convertsubtitles': 'srt',
@@ -111,9 +147,15 @@ def main(args = sys.argv[1:]):
 
 
 	with open(f'{filename}.txt', 'w', encoding='utf-8') as f:
-		f.write(f'{program["title"]}\n')
-		f.write(f'{program["desc"]}\n')
+		f.write(f'{program["service"]} {program["date"]}\n')
+		f.write(f'{program["series"]} #{program["no"]:02}\n')
+		f.write(f'{program["subtitle"]}\n')
 		f.write('\n')
+		f.write(f'{program["desc_series"]}\n')
+		f.write('\n')
+		f.write(f'{program["desc_episode"]}\n')
+		f.write('\n')
+		f.write(f'series url=\'{program["series url"]}\'\n')
 		f.write(f'episode url=\'{program["episode url"]}\'\n')
 		f.write(f'video url=\'{program["video url"]}\'\n')
 
