@@ -3,7 +3,7 @@ import sys
 import re
 
 
-def get_episode(episodeID):
+def request_episode(episodeID):
 	response = requests.get(
 		f'https://statics.tver.jp/content/episode/{episodeID}.json',
 		params={
@@ -19,7 +19,7 @@ def get_episode(episodeID):
 		return None
 
 
-def get_video_id(accountID, videoRef, key):
+def request_video(accountID, videoRef, key):
 	response = requests.get(
 		f'https://edge.api.brightcove.com/playback/v1/accounts/{accountID}/videos/ref:{videoRef}',
 		headers={
@@ -51,10 +51,8 @@ def get_key(accountID, playerID):
 		exit()
 
 
-def main(args = sys.argv[1:]):
-	episodeID = args[0].rstrip('/').split('/')[-1].rstrip('a')
-
-	episodeRes = get_episode(episodeID)
+def get_program(episodeID):
+	episodeRes = request_episode(episodeID)
 	if episodeRes == None:
 		exit()
 
@@ -71,7 +69,7 @@ def main(args = sys.argv[1:]):
 	print(f'{key=}')
 
 
-	videoRes = get_video_id(accountID, videoRef, key)
+	videoRes = request_video(accountID, videoRef, key)
 	if videoRes == None:
 		exit()
 
@@ -79,34 +77,37 @@ def main(args = sys.argv[1:]):
 	title = videoRes['name']
 	desc = videoRes['description']
 
-	print(f'{title=}')
-	print(f'{videoID=}')
+	return {
+		'title': title,
+		'desc': desc,
+		'episode url': f'https://tver.jp/episodes/{episodeID}',
+		'video url': f'http://players.brightcove.net/{accountID}/default_default/index.html?videoId={videoID}'
+	}
 
 
-	url = f'http://players.brightcove.net/{accountID}/default_default/index.html?videoId={videoID}'
-	print(f'{url=}')
+def main(args = sys.argv[1:]):
+	episodeID = args[0].rstrip('/').split('/')[-1].rstrip('a')
 
+	program = get_program(episodeID)
 
 	dl = youtube_dl.YoutubeDL({
-		'outtmpl': f'{title}.mp4',
+		'outtmpl': f'{program["title"]}.mp4',
 		'writesubtitles': True,
 		'writeautomaticsub': True,
 		'convertsubtitles': 'srt',
 	})
 	filename = re.sub(r'\..*', '', dl.prepare_filename({}))
-
 	print(f'{filename=}')
 
-	with open(f'{filename}.txt', 'w', encoding='utf-8') as f:
-		f.write(f'{title}\n')
-		f.write(f'{desc}\n')
-		f.write('\n')
-		f.write(f'url=https://tver.jp/episodes/{episodeID}\n')
-		f.write(f'{episodeID=}\n')
-		f.write(f'{accountID=}\n')
-		f.write(f'{videoID=}\n')
 
-	dl.download([url])
+	with open(f'{filename}.txt', 'w', encoding='utf-8') as f:
+		f.write(f'{program["title"]}\n')
+		f.write(f'{program["desc"]}\n')
+		f.write('\n')
+		f.write(f'episode url=\'{program["episode url"]}\'\n')
+		f.write(f'video url=\'{program["video url"]}\'\n')
+
+	dl.download([program['video url']])
 
 
 if __name__ == '__main__':
