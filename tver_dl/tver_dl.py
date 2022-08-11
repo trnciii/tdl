@@ -1,6 +1,7 @@
 import requests, youtube_dl
 import sys
 import re
+import argparse
 
 
 def request_episode(episodeID, dump=False):
@@ -130,11 +131,27 @@ def get_program(episodeID, dump=False):
 	}
 
 
+def parse_args(_args):
+	parser = argparse.ArgumentParser()
 
-def main(args = sys.argv[1:]):
-	episodeID = args[0].rstrip('/').split('/')[-1].rstrip('a')
+	parser.add_argument('episodeID', type=str,
+		help='tver url or episode id')
 
-	program = get_program(episodeID, 'dump' in args)
+	parser.add_argument('--dump', action='store_true',
+		help='dump responses')
+
+
+	args = parser.parse_args(_args)
+
+	args.episodeID = args.episodeID.rstrip('/').split('/')[-1].rstrip('a')
+
+	return args
+
+
+def main(_args = sys.argv[1:]):
+	args = parse_args(_args)
+
+	program = get_program(args.episodeID, dump=args.dump)
 
 	dl = youtube_dl.YoutubeDL({
 		'outtmpl': f'{program["name"]}.mp4',
