@@ -1,7 +1,12 @@
-import requests, youtube_dl
+import requests
 import sys
 import re
 import argparse
+
+
+def save(name, data):
+	with open(name, 'w', encoding='utf-8') as f:
+		f.write(data)
 
 
 def request_episode(episodeID, dump=False):
@@ -13,9 +18,7 @@ def request_episode(episodeID, dump=False):
 	)
 
 	if response.ok:
-		if dump:
-			with open(f'episode_{episodeID}.json', 'w', encoding='utf-8') as f:
-				f.write(response.text)
+		if dump: save(f'{episodeID}.json', response.text)
 		return response.json()
 	else:
 		print('failed to get episode info')
@@ -31,9 +34,7 @@ def request_series(seriesID, dump=False):
 		})
 
 	if response.ok:
-		if dump:
-			with open(f'series_{seriesID}.json', 'w', encoding='utf-8') as f:
-				f.write(response.text)
+		if dump: save(f'{seriesID}.json', response.text)
 		return response.json()
 	else:
 		print('failed to get series')
@@ -50,9 +51,7 @@ def request_video(accountID, videoRef, key, dump=False):
 	)
 
 	if response.ok:
-		if dump:
-			with open(f'video_{accountID}_{videoRef}.json', 'w', encoding='utf-8') as f:
-				f.write(response.text)
+		if dump: save(f'video-{accountID}-{videoRef}.json', response.text)
 		return response.json()
 	else:
 		print('failed to get video id')
@@ -66,9 +65,7 @@ def get_key(accountID, playerID, dump=False):
 		headers={}
 	)
 	if response.ok:
-		if dump:
-			with open(f'key_{accountID}.js', 'w', encoding='utf-8') as f:
-				f.write(response.text)
+		if dump: save(f'key-{accountID}.js', response.text)
 		return re.search(
 			r'(?<=policyKey:")(.*?)(?=")',
 			response.text
@@ -117,7 +114,7 @@ def get_program(episodeID, dump=False):
 		'desc_series': seriesRes['description'],
 
 		'subtitle': episodeRes['title'],
-		'no': episodeRes['no'],
+		'index': episodeRes['no'],
 		'date': episodeRes['broadcastDateLabel'],
 		'service': episodeRes['broadcastProviderLabel'],
 		'caption': episodeRes['isSubtitle'],
@@ -127,7 +124,12 @@ def get_program(episodeID, dump=False):
 
 		'series url': f'https://tver.jp/lp/series/{seriesID}',
 		'episode url': f'https://tver.jp/episodes/{episodeID}',
-		'video url': f'http://players.brightcove.net/{accountID}/default_default/index.html?videoId={videoID}'
+		'video url': f'http://players.brightcove.net/{accountID}/default_default/index.html?videoId={videoID}',
+
+		'accountID': accountID,
+		'episodeID': episodeID,
+		'seriesID': seriesID,
+		'videoRef': videoRef,
 	}
 
 
@@ -149,6 +151,8 @@ def parse_args(_args):
 
 
 def main(_args = sys.argv[1:]):
+	import youtube_dl
+
 	args = parse_args(_args)
 
 	program = get_program(args.episodeID, dump=args.dump)
@@ -163,18 +167,26 @@ def main(_args = sys.argv[1:]):
 	print(f'{filename=}')
 
 
-	with open(f'{filename}.txt', 'w', encoding='utf-8') as f:
-		f.write(f'{program["service"]} {program["date"]}\n')
-		f.write(f'{program["series"]} #{program["no"]:02}\n')
-		f.write(f'{program["subtitle"]}\n')
-		f.write('\n')
-		f.write(f'{program["desc_series"]}\n')
-		f.write('\n')
-		f.write(f'{program["desc_episode"]}\n')
-		f.write('\n')
-		f.write(f'series url=\'{program["series url"]}\'\n')
-		f.write(f'episode url=\'{program["episode url"]}\'\n')
-		f.write(f'video url=\'{program["video url"]}\'\n')
+	save(f'{filename}.txt',
+		'\n'.join([
+			f'{program["service"]} {program["date"]}',
+			f'{program["series"]} #{program["no"]:02}',
+			f'{program["subtitle"]}',
+			'',
+			f'{program["desc_series"]}',
+			'',
+			f'{program["desc_episode"]}',
+			'',
+			f'series:{program["series url"]}',
+			f'episode:{program["episode url"]}',
+			f'video:{program["video url"]}',
+			'',
+			f'accountID:{program["accountID"]}',
+			f'episodeID:{program["episodeID"]}',
+			f'seriesID:{program["seriesID"]}',
+			f'videoRef:{program["videoRef"]}',
+		])
+	)
 
 	dl.download([program['video url']])
 
