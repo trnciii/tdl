@@ -145,6 +145,9 @@ def parse_args(_args):
 	parser.add_argument('--no-dl', action='store_true',
 		help='no video download')
 
+	parser.add_argument('--caption', action='store_true',
+		help='save caption')
+
 
 	args = parser.parse_args(_args)
 
@@ -162,9 +165,9 @@ def main(_args = sys.argv[1:]):
 
 	dl = youtube_dl.YoutubeDL({
 		'outtmpl': f'{program["name"]}.mp4',
-		'writesubtitles': True,
-		'writeautomaticsub': True,
-		'convertsubtitles': 'srt',
+		'writesubtitles': args.caption,
+		'writeautomaticsub': args.caption,
+		'convertsubtitles': 'vtt',
 		'skip_download': args.no_dl,
 	})
 	filename = re.sub(r'\..*', '', dl.prepare_filename({}))
