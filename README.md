@@ -25,10 +25,11 @@ Episode id is a string that starts with 'ep-' and found in a url as `https://tve
 
 ### options
 
+* `-h --help` shows help.
 * `-o --output` sets output name inheriting [youtube-dl output template](https://github.com/ytdl-org/youtube-dl#output-template).
+* `--caption` saves caption.vtt file.
 * `--dump` saves responses for all internal requests.
 * `--no-dl` prevents downloading the video file.
-* `--caption` saves caption.vtt file.
 
 
 ## from python
