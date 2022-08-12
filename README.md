@@ -20,10 +20,13 @@ pip install -e .
 ```sh
 tver-dl <url or episode id> <options>
 ```
-video, program info, and caption (if provided) are saved in current directory.
+Video, program info, and caption (if provided) are saved in current directory.
+Episode id is a string that starts with 'ep-' and found in a url as `https://tver.jp/episodes/<episode id>`.
 
-* episode id is a string that starts with 'ep-' and found in a url as `https://tver.jp/episodes/<episode id>`.
-* adding `--dump` option saves responses for all internal requests.
+### options
+
+* `--dump` saves responses for all internal requests.
+* `--no-dl` prevents downloading the video file.
 
 
 ## from python

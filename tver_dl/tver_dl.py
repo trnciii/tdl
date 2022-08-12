@@ -142,6 +142,9 @@ def parse_args(_args):
 	parser.add_argument('--dump', action='store_true',
 		help='dump responses')
 
+	parser.add_argument('--no-dl', action='store_true',
+		help='no video download')
+
 
 	args = parser.parse_args(_args)
 
@@ -162,6 +165,7 @@ def main(_args = sys.argv[1:]):
 		'writesubtitles': True,
 		'writeautomaticsub': True,
 		'convertsubtitles': 'srt',
+		'skip_download': args.no_dl,
 	})
 	filename = re.sub(r'\..*', '', dl.prepare_filename({}))
 	print(f'{filename=}')
