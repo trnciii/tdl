@@ -175,7 +175,7 @@ def main(_args = sys.argv[1:]):
 		'outtmpl': args.output,
 		'writesubtitles': args.caption,
 		'writeautomaticsub': args.caption,
-		'convertsubtitles': 'vtt',
+		'convertsubtitles': '',
 		'skip_download': args.no_dl,
 	})
 
