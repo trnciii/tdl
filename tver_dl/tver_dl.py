@@ -118,9 +118,9 @@ def get_program(episodeID, dump=False):
 		'date': episodeRes['broadcastDateLabel'],
 		'service': episodeRes['broadcastProviderLabel'],
 		'caption': episodeRes['isSubtitle'],
+		'desc_episode': episodeRes['description'],
 
 		'name': videoRes['name'],
-		'desc_episode': videoRes['description'],
 
 		'series url': f'https://tver.jp/lp/series/{seriesID}',
 		'episode url': f'https://tver.jp/episodes/{episodeID}',
@@ -170,7 +170,7 @@ def main(_args = sys.argv[1:]):
 	save(f'{filename}.txt',
 		'\n'.join([
 			f'{program["service"]} {program["date"]}',
-			f'{program["series"]} #{program["no"]:02}',
+			f'{program["series"]} #{program["index"]:02}',
 			f'{program["subtitle"]}',
 			'',
 			f'{program["desc_series"]}',
