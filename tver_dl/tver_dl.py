@@ -148,10 +148,18 @@ def parse_args(_args):
 	parser.add_argument('--caption', action='store_true',
 		help='save caption')
 
+	out_default = r'%(title)s.%(ext)s'
+	out_default_raw = out_default.replace(r'%', r'%%')
+	parser.add_argument('-o', '--output', type=str, default=out_default,
+		help=f'output path inheriting youtube_dl output template. defult={out_default_raw}')
+
 
 	args = parser.parse_args(_args)
 
 	args.episodeID = args.episodeID.rstrip('/').split('/')[-1].rstrip('a')
+
+	if args.output.endswith('/'):
+		args.output += out_default
 
 	return args
 
@@ -164,15 +172,15 @@ def main(_args = sys.argv[1:]):
 	program = get_program(args.episodeID, dump=args.dump)
 
 	dl = youtube_dl.YoutubeDL({
-		'outtmpl': f'{program["name"]}.mp4',
+		'outtmpl': args.output,
 		'writesubtitles': args.caption,
 		'writeautomaticsub': args.caption,
 		'convertsubtitles': 'vtt',
 		'skip_download': args.no_dl,
 	})
-	filename = re.sub(r'\..*', '', dl.prepare_filename({}))
-	print(f'{filename=}')
 
+	info = dl.extract_info(program['video url']) # downloading here
+	filename = re.sub(r'\..*', '', dl.prepare_filename(info))
 
 	save(f'{filename}.txt',
 		'\n'.join([
@@ -194,8 +202,6 @@ def main(_args = sys.argv[1:]):
 			f'videoRef:{program["videoRef"]}',
 		])
 	)
-
-	dl.download([program['video url']])
 
 
 if __name__ == '__main__':
