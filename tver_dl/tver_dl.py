@@ -100,7 +100,9 @@ def get_program(episodeID, dump=False):
 		exit()
 
 	videoID = videoRes['id']
+	url = f'http://players.brightcove.net/{accountID}/default_default/index.html?videoId={videoID}'
 	print(f'{videoID=}')
+	print(f'{url=}')
 
 
 	seriesID = episodeRes['seriesID']
@@ -124,7 +126,7 @@ def get_program(episodeID, dump=False):
 
 		'series url': f'https://tver.jp/lp/series/{seriesID}',
 		'episode url': f'https://tver.jp/episodes/{episodeID}',
-		'video url': f'http://players.brightcove.net/{accountID}/default_default/index.html?videoId={videoID}',
+		'video url': url,
 
 		'accountID': accountID,
 		'episodeID': episodeID,
