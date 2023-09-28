@@ -84,22 +84,27 @@ def get_program(episodeID, dump=False):
 
 	vid = episodeRes['video']
 	accountID = vid['accountID']
-	videoRef = vid['videoRefID']
 	playerID = vid['playerID']
 	print(f'{accountID=}')
-	print(f'{videoRef=}')
 	print(f'{playerID=}')
 
 
-	key = get_key(accountID, playerID, dump=dump)
-	print(f'{key=}')
+	if 'videoRefID' in vid.keys():
+		videoRef = vid['videoRefID']
+		print(f'{videoRef=}')
+
+		key = get_key(accountID, playerID, dump=dump)
+		print(f'{key=}')
 
 
-	videoRes = request_video(accountID, videoRef, key, dump=dump)
-	if videoRes == None:
-		exit()
+		videoRes = request_video(accountID, videoRef, key, dump=dump)
+		if videoRes == None:
+			exit()
 
-	videoID = videoRes['id']
+		videoID = videoRes['id']
+
+
+
 	url = f'http://players.brightcove.net/{accountID}/default_default/index.html?videoId={videoID}'
 	print(f'{videoID=}')
 	print(f'{url=}')
