@@ -76,49 +76,57 @@ def get_key(accountID, playerID, dump=False):
 		print(response.reason)
 		exit()
 
+def get_video_id(episode, dump):
+	try:
+		vid = episode['video']
+		print(vid.keys())
+
+		if 'videoID' in vid.keys():
+			return vid['videoID']
+
+		if 'videoRefID' in vid.keys():
+			videoRef = vid['videoRefID']
+			accountID = vid['accountID']
+			key = get_key(accountID, vid['playerID'], dump=dump)
+			videoRes = request_video(accountID, videoRef, key, dump=dump)
+			return  videoRes['id']
+
+		raise Exception('no matching search method')
+
+	except Exception as e:
+		print('failed to get video info and so video id')
+		print(e)
+		exit()
+
 
 def get_program(episodeID, dump=False):
 	episodeRes = request_episode(episodeID, dump=dump)
 	if episodeRes == None:
+		print('failed to get episode info')
 		exit()
 
 	vid = episodeRes['video']
 	accountID = vid['accountID']
 	playerID = vid['playerID']
-	print(f'{accountID=}')
-	print(f'{playerID=}')
-
-
-	if 'videoRefID' in vid.keys():
-		videoRef = vid['videoRefID']
-		print(f'{videoRef=}')
-
-		key = get_key(accountID, playerID, dump=dump)
-		print(f'{key=}')
-
-
-		videoRes = request_video(accountID, videoRef, key, dump=dump)
-		if videoRes == None:
-			exit()
-
-		videoID = videoRes['id']
-
-
-
+	videoID = get_video_id(episodeRes, dump=dump)
 	url = f'http://players.brightcove.net/{accountID}/default_default/index.html?videoId={videoID}'
+	print(f'{playerID=}')
+	print(f'{accountID=}')
 	print(f'{videoID=}')
 	print(f'{url=}')
 
 
 	seriesID = episodeRes['seriesID']
-	seriesRes = request_series(seriesID, dump=dump)
-	if seriesRes == None:
-		exit()
-
+	if seriesRes := request_series(seriesID, dump=dump):
+		series = seriesRes['title']
+		desc_series = seriesRes['description']
+	else:
+		series = ''
+		desc_series = ''
 
 	return {
-		'series': seriesRes['title'],
-		'desc_series': seriesRes['description'],
+		'series': series,
+		'desc_series': desc_series,
 
 		'subtitle': episodeRes['title'],
 		'index': episodeRes['no'],
@@ -127,8 +135,6 @@ def get_program(episodeID, dump=False):
 		'caption': episodeRes['isSubtitle'],
 		'desc_episode': episodeRes['description'],
 
-		'name': videoRes['name'],
-
 		'series url': f'https://tver.jp/lp/series/{seriesID}',
 		'episode url': f'https://tver.jp/episodes/{episodeID}',
 		'video url': url,
@@ -136,7 +142,6 @@ def get_program(episodeID, dump=False):
 		'accountID': accountID,
 		'episodeID': episodeID,
 		'seriesID': seriesID,
-		'videoRef': videoRef,
 	}
 
 
@@ -189,26 +194,22 @@ def main(_args = sys.argv[1:]):
 	info = dl.extract_info(program['video url']) # downloading here
 	filename = re.sub(r'\..*', '', dl.prepare_filename(info))
 
-	save(f'{filename}.txt',
-		'\n'.join([
-			f'{program["service"]} {program["date"]}',
-			f'{program["series"]} #{program["index"]:02}',
-			f'{program["subtitle"]}',
-			'',
-			f'{program["desc_series"]}',
-			'',
-			f'{program["desc_episode"]}',
-			'',
-			f'series:{program["series url"]}',
-			f'episode:{program["episode url"]}',
-			f'video:{program["video url"]}',
-			'',
-			f'accountID:{program["accountID"]}',
-			f'episodeID:{program["episodeID"]}',
-			f'seriesID:{program["seriesID"]}',
-			f'videoRef:{program["videoRef"]}',
-		])
-	)
+	save(f'{filename}.txt', f'''{program["service"]} {program["date"]}
+{program["series"]} #{program["index"]:02}
+{program["subtitle"]}
+
+{program["desc_series"]}
+
+{program["desc_episode"]}
+
+series:{program["series url"]}
+episode:{program["episode url"]}
+video:{program["video url"]}
+
+accountID:{program["accountID"]}
+episodeID:{program["episodeID"]}
+seriesID:{program["seriesID"]}
+''')
 
 
 if __name__ == '__main__':
