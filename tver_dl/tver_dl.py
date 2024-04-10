@@ -220,14 +220,36 @@ episodeID:{program["episodeID"]}
 seriesID:{program["seriesID"]}
 ''')
 
-def extract_id(i):
-	return i.rstrip('/').split('/')[-1].rstrip('a')
+def get_series_episodes(seriesID):
+	info = create()
+	response = requests.get(f'https://platform-api.tver.jp/service/api/v1/callSeriesEpisodes/{seriesID}',
+		params={
+			'platform_uid': info['result']['platform_uid'],
+			'platform_token': info['result']['platform_token'],
+			'require_data': 'later',
+		},
+		headers={
+			'x-tver-platform-type': 'web',
+		}
+	)
+
+	data = response.json()
+	for contents in data['result']['contents']:
+		yield from (c['content']['id'] for c in contents['contents'])
+
+def expand_ids(ids):
+	for i in ids:
+		i = i.rstrip('/').split('/')[-1].rstrip('a')
+		if i.startswith('ep'):
+			yield i
+		elif i.startswith('sr'):
+			yield from get_series_episodes(i)
 
 def main():
 	parser = argparse.ArgumentParser()
 
-	parser.add_argument('episodeID', type=str, nargs='*',
-		help='tver url or episode id')
+	parser.add_argument('ids', type=str, nargs='*',
+		help='tver url or episode or series ids')
 
 	parser.add_argument('--dump', action='store_true',
 		help='dump responses')
@@ -256,8 +278,9 @@ def main():
 	if args.search:
 		search(' '.join(args.search))
 	else:
-		for i in map(extract_id, args.episodeID):
+		for i in expand_ids(args.ids):
 			download(i, args.output, args.caption, args.no_dl, args.dump)
+			print('-'*30)
 
 
 if __name__ == '__main__':
