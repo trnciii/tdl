@@ -2,6 +2,7 @@ import requests
 import sys
 import re
 import argparse
+import youtube_dl
 
 
 def save(name, data):
@@ -144,51 +145,50 @@ def get_program(episodeID, dump=False):
 		'seriesID': seriesID,
 	}
 
+def create():
+	response = requests.post('https://platform-api.tver.jp/v2/api/platform_users/browser/create',
+		data={
+			'device_type': 'pc'
+		})
+	return response.json()
 
-def parse_args(_args):
-	parser = argparse.ArgumentParser()
+def format_search_result(result):
+	content = result['content']
+	content_id = content.get("id")
+	lines = [f'{content_id} {content.get("broadcastDateLabel")} {content.get("seriesTitle")} {content.get("title")} {content.get("broadcasterName")}']
+	if result['type'] == 'episode':
+		lines.append(f'  https://tver.jp/episodes/{content_id}')
+	return '\n'.join(lines)
 
-	parser.add_argument('episodeID', type=str,
-		help='tver url or episode id')
+def search(words):
+	info = create()
+	response = requests.get('https://platform-api.tver.jp/service/api/v2/callKeywordSearch',
+		params={
+			'platform_uid': info['result']['platform_uid'],
+			'platform_token': info['result']['platform_token'],
+			'sortKey': 'score',
+			'filterKey': '',
+			'keyword': words,
+			'require_data': 'later',
+		},
+		headers={
+			'x-tver-platform-type': 'web',
+		})
 
-	parser.add_argument('--dump', action='store_true',
-		help='dump responses')
+	data = response.json()
+	lines = [format_search_result(r) for r in data['result']['contents']]
+	for line in lines:
+		print(line)
 
-	parser.add_argument('--no-dl', action='store_true',
-		help='no video download')
-
-	parser.add_argument('--caption', action='store_true',
-		help='save caption')
-
-	out_default = r'%(title)s.%(ext)s'
-	out_default_raw = out_default.replace(r'%', r'%%')
-	parser.add_argument('-o', '--output', type=str, default=out_default,
-		help=f'output path inheriting youtube_dl output template. defult={out_default_raw}')
-
-
-	args = parser.parse_args(_args)
-
-	args.episodeID = args.episodeID.rstrip('/').split('/')[-1].rstrip('a')
-
-	if args.output.endswith('/'):
-		args.output += out_default
-
-	return args
-
-
-def main(_args = sys.argv[1:]):
-	import youtube_dl
-
-	args = parse_args(_args)
-
-	program = get_program(args.episodeID, dump=args.dump)
+def download(episodeID, output, caption, no_dl, dump):
+	program = get_program(episodeID, dump=dump)
 
 	dl = youtube_dl.YoutubeDL({
-		'outtmpl': args.output,
-		'writesubtitles': args.caption,
-		'writeautomaticsub': args.caption,
+		'outtmpl': output,
+		'writesubtitles': caption,
+		'writeautomaticsub': caption,
 		'convertsubtitles': '',
-		'skip_download': args.no_dl,
+		'skip_download': no_dl,
 	})
 
 	info = dl.extract_info(program['video url']) # downloading here
@@ -210,6 +210,43 @@ accountID:{program["accountID"]}
 episodeID:{program["episodeID"]}
 seriesID:{program["seriesID"]}
 ''')
+
+
+def main():
+	parser = argparse.ArgumentParser()
+
+	parser.add_argument('episodeID', type=str, nargs='?',
+		help='tver url or episode id')
+
+	parser.add_argument('--dump', action='store_true',
+		help='dump responses')
+
+	parser.add_argument('--no-dl', action='store_true',
+		help='no video download')
+
+	parser.add_argument('--caption', action='store_true',
+		help='save caption')
+
+	out_default = r'%(title)s.%(ext)s'
+	out_default_raw = out_default.replace(r'%', r'%%')
+	parser.add_argument('-o', '--output', type=str, default=out_default,
+		help=f'output path inheriting youtube_dl output template. defult={out_default_raw}')
+
+	parser.add_argument('--search', type=str, nargs='+')
+
+
+	args = parser.parse_args()
+
+	if args.output.endswith('/'):
+		args.output += out_default
+
+	##
+
+	if args.search:
+		search(' '.join(args.search))
+	else:
+		episodeID = args.episodeID.rstrip('/').split('/')[-1].rstrip('a')
+		download(episodeID, args.output, args.caption, args.no_dl, args.dump)
 
 
 if __name__ == '__main__':
