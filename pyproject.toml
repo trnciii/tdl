@@ -1,0 +1,7 @@
+[project]
+name = 'tver-dl'
+version = '0.0.1'
+dependencies = ['requests', 'youtube-dl']
+
+[project.scripts]
+tver-dl = 'tver_dl:main'
