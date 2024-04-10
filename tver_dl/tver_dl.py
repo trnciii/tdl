@@ -220,11 +220,13 @@ episodeID:{program["episodeID"]}
 seriesID:{program["seriesID"]}
 ''')
 
+def extract_id(i):
+	return i.rstrip('/').split('/')[-1].rstrip('a')
 
 def main():
 	parser = argparse.ArgumentParser()
 
-	parser.add_argument('episodeID', type=str, nargs='?',
+	parser.add_argument('episodeID', type=str, nargs='*',
 		help='tver url or episode id')
 
 	parser.add_argument('--dump', action='store_true',
@@ -254,8 +256,8 @@ def main():
 	if args.search:
 		search(' '.join(args.search))
 	else:
-		episodeID = args.episodeID.rstrip('/').split('/')[-1].rstrip('a')
-		download(episodeID, args.output, args.caption, args.no_dl, args.dump)
+		for i in map(extract_id, args.episodeID):
+			download(i, args.output, args.caption, args.no_dl, args.dump)
 
 
 if __name__ == '__main__':
