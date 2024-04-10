@@ -79,7 +79,6 @@ def get_key(accountID, playerID, dump=False):
 def get_video_id(episode, dump):
 	try:
 		vid = episode['video']
-		print(vid.keys())
 
 		if 'videoID' in vid.keys():
 			return vid['videoID']
