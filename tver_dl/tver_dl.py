@@ -1,8 +1,7 @@
-import requests
-import sys
-import re
+import requests, youtube_dl
+import sys, re
 import argparse
-import youtube_dl
+from datetime import datetime
 
 
 def save(name, data):
@@ -153,12 +152,22 @@ def create():
 	return response.json()
 
 def format_search_result(result):
-	content = result['content']
-	content_id = content.get("id")
-	lines = [f'{content_id} {content.get("broadcastDateLabel")} {content.get("seriesTitle")} {content.get("title")} {content.get("broadcasterName")}']
 	if result['type'] == 'episode':
-		lines.append(f'  https://tver.jp/episodes/{content_id}')
-	return '\n'.join(lines)
+		content = result['content']
+		episode_id = content.get('id')
+		series_id = content.get('seriesID')
+		end_at = datetime.fromtimestamp(content['endAt'])
+		if (end_at - datetime.now()).days < 7:
+			end_at = f'\x1b[33m{end_at}\x1b[m'
+
+		return f'''{content.get('seriesTitle')} {content.get('title')}
+  Ends at {end_at}
+  {episode_id} https://tver.jp/episodes/{episode_id}
+  {series_id} https://tver.jp/series/{series_id}'''
+
+	else:
+		return result
+
 
 def search(words):
 	info = create()
