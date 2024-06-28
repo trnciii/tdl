@@ -238,7 +238,7 @@ def get_series_episodes(seriesID):
 
 def expand_ids(ids):
 	for i in ids:
-		i = i.rstrip('/').split('/')[-1].rstrip('a')
+		i = i.rstrip('/').split('/')[-1]
 		if i.startswith('ep'):
 			yield i
 		elif i.startswith('sr'):
